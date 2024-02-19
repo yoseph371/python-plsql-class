@@ -1,0 +1,3 @@
+class PredicateGenerator:
+    def __init__(self, relations):
+        self.relations = relations
