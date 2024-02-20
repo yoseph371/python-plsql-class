@@ -1,3 +1,41 @@
+python class:
 class PredicateGenerator:
     def __init__(self, relations):
         self.relations = relations
+plsql class:
+CREATE OR REPLACE TYPE relation_obj AS OBJECT (
+    name VARCHAR2(50),
+    MEMBER FUNCTION get_name RETURN VARCHAR2
+);
+
+CREATE OR REPLACE TYPE relation_nt AS TABLE OF relation_obj;
+
+CREATE OR REPLACE FUNCTION get_predicate_fragments (
+    p_relations IN relation_nt
+) RETURN VARCHAR2 AS
+    v_predicate_fragments VARCHAR2(4000);
+    v_relation relation_obj;
+BEGIN
+    FOR i IN 1..p_relations.COUNT LOOP
+        v_relation := p_relations(i);
+        IF i > 1 THEN
+            v_predicate_fragments := v_predicate_fragments || ' AND ';
+        END IF;
+        v_predicate_fragments := v_predicate_fragments || v_relation.get_name || '(?)';
+    END LOOP;
+    RETURN v_predicate_fragments;
+END get_predicate_fragments;
+
+//To use this function, you would first create a collection of relation objects and then pass it to the function
+
+DECLARE
+    v_relations relation_nt := relation_nt(
+        relation_obj('employee'),
+        relation_obj('department')
+    );
+    v_predicate_fragments VARCHAR2(4000);
+BEGIN
+    v_predicate_fragments := get_predicate_fragments(v_relations);
+    DBMS_OUTPUT.PUT_LINE(v_predicate_fragments);
+
+END;
